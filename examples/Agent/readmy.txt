@@ -1,0 +1,29 @@
+Добавил новые группы GeneratorMode.. Переделать в коде нужно..
+
+
+
+
+
+deviceNetwork	OBJECT IDENTIFIER ::= { device 5 }
+
+deviceNetworkInit OBJECT-TYPE
+    SYNTAX	INTEGER {
+			unknown(0),
+			init(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Initialize new network configuration."
+    ::= { deviceNetwork 100 }	    
+
+deviceSaveConfig OBJECT-TYPE
+    SYNTAX      INTEGER {
+			unknown(0),
+			saveConfig(1)
+			}
+    MAX-ACCESS  read-write
+    STATUS     current
+    DESCRIPTION
+        "Save config"
+    ::= { deviceNetwork 101 }	

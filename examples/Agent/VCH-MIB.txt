@@ -1,0 +1,19 @@
+VCH-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE,
+	enterprises 
+		FROM SNMPv2-SMI
+;
+
+vch MODULE-IDENTITY
+    LAST-UPDATED "202208310000Z"
+    ORGANIZATION "vremya-ch"
+    CONTACT-INFO "admin@vremya-ch.com"
+	DESCRIPTION  ""
+    ::= { enterprises 9191 }
+	
+-- vch { iso org(3) dod(6) internet(1) private(4) enterprises(1) vch(9191) }
+
+
+END

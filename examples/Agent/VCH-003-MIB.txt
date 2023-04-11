@@ -1,0 +1,1875 @@
+VCH-003-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY,
+	OBJECT-TYPE,
+	NOTIFICATION-TYPE,
+	IpAddress,
+	TimeTicks,
+	DisplayString
+        	FROM SNMPv2-TC
+	sysUpTime, snmpTrapOID
+	        FROM SNMPv2-MIB
+    vch 
+			FROM VCH-MIB
+;
+
+vch003 MODULE-IDENTITY
+    LAST-UPDATED "202208310000Z"
+    ORGANIZATION "vremya-ch"
+    CONTACT-INFO "admin@vremya-ch.com"
+    DESCRIPTION  "The MIB module for VCH-003"
+    ::= { vch 1 }
+	
+-- vch003 { iso org(3) dod(6) internet(1) private(4) enterprises(1) vch(9191) vch003(1) }
+
+
+-- ########################################
+-- # General Information (Monitoring card)
+-- ########################################
+
+device	OBJECT IDENTIFIER ::= { vch003 1 }
+
+deviceName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "Device name"
+    ::= { device 1 }
+
+
+deviceThresholds OBJECT-TYPE
+    SYNTAX     INTEGER {
+			disable(0),
+			enable(1)
+			}
+    MAX-ACCESS  read-write
+    STATUS     current
+    DESCRIPTION
+        "Ban signals by thresholds"
+    ::= { device 2 }
+
+
+
+deviceNetwork	OBJECT IDENTIFIER ::= { device 5 }
+
+deviceNetworkInit OBJECT-TYPE
+    SYNTAX	INTEGER {
+			unknown(0),
+			init(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Initialize new network configuration."
+    ::= { deviceNetwork 100 }	    
+
+deviceSaveConfig OBJECT-TYPE
+    SYNTAX      INTEGER {
+			unknown(0),
+			saveConfig(1)
+			}
+    MAX-ACCESS  read-write
+    STATUS     current
+    DESCRIPTION
+        "Save config"
+    ::= { deviceNetwork 101 }	
+
+deviceIpAddr OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Device IP-address"
+    ::= { deviceNetwork 1 }
+
+deviceMask OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Mask"
+    ::= { deviceNetwork 2 }
+	
+	
+deviceSnmp	OBJECT IDENTIFIER ::= { deviceNetwork 5 }
+	
+deviceSnmpTrapEnable OBJECT-TYPE
+    SYNTAX	INTEGER {
+			disable(0),
+			enable(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Trap status"
+    ::= { deviceSnmp 1 }		
+	
+deviceSnmpAddTrapTargetIpAddr OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Add Trap Target IP"
+    ::= { deviceSnmp 2 }
+	
+deviceSnmpDelTrapTargetIpAddr OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Delete Trap Target IP"
+    ::= { deviceSnmp 3 }
+	
+	
+	
+devicePower		OBJECT IDENTIFIER ::= { device 6 }
+
+devicePowerCard1	OBJECT IDENTIFIER ::= { devicePower 1 }
+devicePowerCard2	OBJECT IDENTIFIER ::= { devicePower 2 }
+
+
+devicePowerStatus1 OBJECT-TYPE
+    SYNTAX      INTEGER {
+			failure(0),
+			ok(1)
+			}
+    MAX-ACCESS  read-only
+    STATUS     current
+    DESCRIPTION
+        "Power status 1"
+    ::= { devicePowerCard1 1 }
+	
+deviceFuse1 OBJECT-TYPE
+    SYNTAX      INTEGER {
+			failure(0),
+			ok(1)
+			}
+    MAX-ACCESS  read-only
+    STATUS     current
+    DESCRIPTION
+        "Fuse status 1"
+    ::= { devicePowerCard1 2 }	
+	
+	
+devicePowerStatus2 OBJECT-TYPE
+    SYNTAX      INTEGER {
+			failure(0),
+			ok(1)
+			}
+    MAX-ACCESS  read-only
+    STATUS     current
+    DESCRIPTION
+        "Power status 2"
+    ::= { devicePowerCard2 1 }
+	
+deviceFuse2 OBJECT-TYPE
+    SYNTAX      INTEGER {
+			failure(0),
+			ok(1)
+			}
+    MAX-ACCESS  read-only
+    STATUS     current
+    DESCRIPTION
+        "Fuse status 2"
+    ::= { devicePowerCard2 2 }
+	
+
+-- #@N... вспомнить про pwrBlock
+
+
+-- ########################################
+-- # Inventory information
+-- ########################################
+
+inventoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF slotEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Inventory list"
+    ::= { vch003 2 }
+
+slotEntry OBJECT-TYPE
+    SYNTAX      Slot
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { cardSlot }
+    ::= { inventoryTable 1 }
+
+Slot ::= SEQUENCE {
+        cardSlot			INTEGER,
+		cardType			INTEGER,
+	    cardSerialNumber	DisplayString 
+		cardSwVersion		DisplayString,
+		cardHwVersion		DisplayString
+	}
+
+cardSlot OBJECT-TYPE
+    SYNTAX     INTEGER (1..19)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { slotEntry 1 }
+
+cardType OBJECT-TYPE
+    SYNTAX     INTEGER {
+                    input(1),
+                    output(3),
+                    generator(4),
+					monitoring(5),
+					gnss(7),
+					outputMultiplier(8)
+                }
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "Card type"
+    ::= { slotEntry 2 }
+
+cardSerialNumber OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "Card serial number"
+    ::= { slotEntry 3 }
+
+cardSwVersion OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "Card software version"
+    ::= { slotEntry 4 }
+	
+cardHwVersion OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "Card hardware version"
+    ::= { slotEntry 5 }
+
+
+
+
+-- ########################################
+-- # Alarms
+-- ########################################
+-- #@N...
+
+
+
+
+
+-- ########################################
+-- # Trap values
+-- ########################################
+
+traps			OBJECT IDENTIFIER ::= { vch003 50 } 
+trapValues		OBJECT IDENTIFIER ::= { traps 1000 } 
+
+trapSlotNumber 		OBJECT-TYPE
+    SYNTAX		INTEGER (1..19)
+    MAX-ACCESS	read-only
+    STATUS		current
+    DESCRIPTION
+        "Slot number"
+    ::= { trapValues 1 }
+	
+trapPowerNumber		OBJECT-TYPE
+    SYNTAX		INTEGER {
+			powerA(0),
+			powerB(1)
+			}
+    MAX-ACCESS	read-only
+    STATUS		current
+    DESCRIPTION
+        "Power number"
+    ::= { trapValues 2 }
+
+trapChannelNumber	OBJECT-TYPE
+    SYNTAX		INTEGER
+    MAX-ACCESS	read-only
+    STATUS		current
+    DESCRIPTION
+        "Signal number"
+    ::= { trapValues 3 }
+
+	
+trapDevice	OBJECT IDENTIFIER ::= { trapValues 20 }
+trapCard	OBJECT IDENTIFIER ::= { trapValues 21 }
+
+trapInputCard		OBJECT IDENTIFIER ::= { trapCard 1 }
+trapOutputCard		OBJECT IDENTIFIER ::= { trapCard 2 }
+trapGeneratorCard	OBJECT IDENTIFIER ::= { trapCard 4 }
+
+
+-- Device Traps	/ Monitoring 
+
+trapCardInValue	OBJECT-TYPE
+    SYNTAX	INTEGER {
+			output(0),
+			input(1)
+			}
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+        "Input and output card"
+    ::= { trapDevice 1 }
+
+trapCardActiveValue	OBJECT-TYPE
+	SYNTAX  INTEGER {
+				passive(0),
+				active(1)
+		}
+    MAX-ACCESS	read-only
+    STATUS	current
+    ::= { trapDevice 2 }
+
+trapPowerStatusValue	OBJECT-TYPE
+    SYNTAX	INTEGER {
+			failure(0),
+			ok(1)
+			}
+    MAX-ACCESS	read-only
+    STATUS	current
+    ::= { trapDevice 3 }
+
+trapPowerFuseValue	OBJECT-TYPE
+    SYNTAX	INTEGER {
+			failure(0),
+			ok(1)
+			}
+    MAX-ACCESS	read-only
+    STATUS	current
+    ::= { trapDevice 4 }
+
+	
+-- Input Card Traps
+
+trapInputCardInChannelDisqualificationValue	OBJECT-TYPE
+    SYNTAX	INTEGER {
+			disqualificationBySSM(0),
+			disqualificationByStatus(1),
+			lossOfSignal(2),
+			lossOfFrame(3),
+			lossOfMultiframe(4),             
+			signalAppear(5),
+			delay(6)			
+			}
+    MAX-ACCESS	read-only
+    STATUS	current
+    ::= { trapInputCard 1 }
+	
+-- Generator Card Traps
+
+trapGeneratorModeValue OBJECT-TYPE
+SYNTAX	INTEGER {
+			warmup(0),
+			freerun(1),
+			tracking(2),
+			holdover(3),
+			adjustment(6),
+            error(255)   		
+			}
+    MAX-ACCESS	read-only
+    STATUS	current
+    ::= { trapGeneratorCard 1 }
+
+-- Output Card Traps
+
+
+
+
+
+
+
+
+-- ########################################
+-- # Traps Notifications
+-- ########################################
+
+-- Device Notifications	/ Monitoring 
+
+trapCardInTrap	NOTIFICATION-TYPE
+    OBJECTS { trapSlotNumber, trapCardInValue }
+    STATUS  current
+    DESCRIPTION
+        ""
+    ::= { traps 1 } 
+
+trapCardActiveTrap	NOTIFICATION-TYPE
+    OBJECTS { trapSlotNumber, trapCardActiveValue }
+    STATUS  current
+    DESCRIPTION
+        ""
+    ::= { traps 2 } 
+
+trapPowerStatusTrap	NOTIFICATION-TYPE
+    OBJECTS { trapPowerNumber, trapPowerStatusValue }
+    STATUS  current
+    DESCRIPTION
+        ""
+    ::= { traps 3 } 
+	
+trapPowerFuseTrap	NOTIFICATION-TYPE
+    OBJECTS { trapPowerNumber, trapPowerFuseValue }
+    STATUS  current
+    DESCRIPTION
+        ""
+    ::= { traps 4 } 
+	
+	
+-- Input Card Trap Notifications
+
+trapInputCardInChannelDisqualificationTrap NOTIFICATION-TYPE
+    OBJECTS { trapSlotNumber, trapChannelNumber, trapInputCardInChannelDisqualificationValue }
+    STATUS  current
+    DESCRIPTION
+        ""
+    ::= { traps 100 } 
+	
+-- Generator Card Traps
+
+trapGeneratorModeTrap NOTIFICATION-TYPE
+    OBJECTS { trapSlotNumber, trapGeneratorModeValue }
+    STATUS  current
+    DESCRIPTION
+        ""
+    ::= { traps 400 } 
+
+
+-- Output Card Traps
+
+
+
+	
+	
+
+
+
+
+-- ########################################
+-- # Slots
+-- ########################################
+
+
+slots OBJECT IDENTIFIER ::= { vch003 3 }
+
+
+a00 OBJECT IDENTIFIER ::= { slots 1 }
+a01 OBJECT IDENTIFIER ::= { slots 2 }
+a02 OBJECT IDENTIFIER ::= { slots 3 }
+a03 OBJECT IDENTIFIER ::= { slots 4 }
+a04 OBJECT IDENTIFIER ::= { slots 5 }
+a05 OBJECT IDENTIFIER ::= { slots 6 }
+a06 OBJECT IDENTIFIER ::= { slots 7 }
+a08 OBJECT IDENTIFIER ::= { slots 9 }
+a10 OBJECT IDENTIFIER ::= { slots 11 }
+a11 OBJECT IDENTIFIER ::= { slots 12 }
+a12 OBJECT IDENTIFIER ::= { slots 13 }
+a13 OBJECT IDENTIFIER ::= { slots 14 }
+a14 OBJECT IDENTIFIER ::= { slots 15 }
+a15 OBJECT IDENTIFIER ::= { slots 16 }
+a16 OBJECT IDENTIFIER ::= { slots 17 }
+a17 OBJECT IDENTIFIER ::= { slots 18 }
+a18 OBJECT IDENTIFIER ::= { slots 19 }
+
+
+
+-- ########################################
+-- # Slot A00
+-- ########################################
+
+a00Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A00 Card type"
+    ::= { a00 100 }
+
+-- ########################################
+-- # Slot A00 Input Card
+-- ########################################
+
+a00InputCard OBJECT IDENTIFIER ::= { a00 1 }
+
+a00InputCardInChannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a00InputCardInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A00 Input Card input channel table"
+    ::= { a00InputCard 200 }
+
+a00InputCardInCnannelEntry OBJECT-TYPE
+    SYNTAX      A00InputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a00InputCardInChannelNumber }
+    ::= { a00InputCardInChannelTable 1 }
+
+A00InputCardInCnannel ::= SEQUENCE {
+        a00InputCardInChannelNumber					INTEGER,
+		a00InputCardInChannelType					INTEGER,
+		a00InputCardInChannelStatus					INTEGER,
+		a00InputCardInChannelStatusThreshold		INTEGER,
+		a00InputCardInChannelSsm					INTEGER,
+		a00InputCardInChannelSsmThreshold			INTEGER,
+		a00InputCardInChannelWaitToRestoreTime		INTEGER,
+		a00InputCardInChannelState					INTEGER,
+	}
+	
+	
+a00InputCardInChannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..4)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a00InputCardInCnannelEntry 1 }
+
+a00InputCardInChannelType OBJECT-TYPE
+    SYNTAX  INTEGER {
+				off(0),
+				10MHz(1),
+				2048kHz(2),
+				E1(3),
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a00InputCardInCnannelEntry 2 }
+
+
+a00InputCardInChannelStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+				none(0),
+				low(1),
+				high(2)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a00InputCardInCnannelEntry 3 }
+
+a00InputCardInChannelStatusThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+				none(0),
+				low(1),
+				high(2)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a00InputCardInCnannelEntry 4 }
+
+a00InputCardInChannelSsm OBJECT-TYPE
+    SYNTAX  INTEGER {
+				none(0),
+				prc(2),
+				ssuT(4),
+				ssuL(8),
+				sec(11),
+				dnu(15)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a00InputCardInCnannelEntry 5 }
+
+
+a00InputCardInChannelSsmThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+				none(0),
+				prc(2),
+				ssuT(4),
+				ssuL(8),
+				sec(11),
+				dnu(15)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a00InputCardInCnannelEntry 6 }
+
+a00InputCardInChannelWaitToRestoreTime OBJECT-TYPE
+    SYNTAX     INTEGER (1..1275)
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+        "A00 Wait to restore time, sec"
+    ::= { a00InputCardInCnannelEntry 7 }
+
+a00InputCardInChannelState OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+		"Signal state:
+			0 bit - StatusDisqualification,
+			1 bit - LossOfSignal,
+			2 bit - SSMDisqualification,
+			3 bit - LossOfFrame,
+			4 bit - LossOfMultiFrame,
+			5 bit - RecoveryDelay"
+    ::= { a00InputCardInCnannelEntry 8 }
+
+
+
+
+
+-- ########################################
+-- # Slot A01
+-- ########################################
+
+a01Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A01 Card type"
+    ::= { a01 100 }
+
+-- ########################################
+-- # Slot A01 Input Card
+-- ########################################
+
+a01InputCard OBJECT IDENTIFIER ::= { a01 1 }
+
+a01InputCardInChannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a01InputCardInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A01 Input Card input channel table"
+    ::= { a01InputCard 200 }
+
+a01InputCardInCnannelEntry OBJECT-TYPE
+    SYNTAX      A01InputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a01InputCardInChannelNumber }
+    ::= { a01InputCardInChannelTable 1 }
+
+A01InputCardInCnannel ::= SEQUENCE {
+        a01InputCardInChannelNumber					INTEGER,
+        a01InputCardInChannelType					INTEGER,
+        a01InputCardInChannelStatus					INTEGER,
+        a01InputCardInChannelStatusThreshold		INTEGER,
+        a01InputCardInChannelSsm					INTEGER,
+        a01InputCardInChannelSsmThreshold			INTEGER,
+        a01InputCardInChannelWaitToRestoreTime		INTEGER,
+        a01InputCardInChannelState					INTEGER,
+    }
+
+a01InputCardInChannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..4)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a01InputCardInCnannelEntry 1 }
+	
+a01InputCardInChannelType OBJECT-TYPE
+    SYNTAX  INTEGER {
+                off(0),
+                10MHz(1),
+                2048kHz(2),
+                E1(3),
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a01InputCardInCnannelEntry 2 }
+
+
+a01InputCardInChannelStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                low(1),
+                high(2)
+            }
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a01InputCardInCnannelEntry 3 }
+
+a01InputCardInChannelStatusThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                low(1),
+                high(2)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a01InputCardInCnannelEntry 4 }
+
+a01InputCardInChannelSsm OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a01InputCardInCnannelEntry 5 }
+
+
+a01InputCardInChannelSsmThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a01InputCardInCnannelEntry 6 }
+
+a01InputCardInChannelWaitToRestoreTime OBJECT-TYPE
+    SYNTAX     INTEGER (1..1275)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "A01 Wait to restore time, sec"
+    ::= { a01InputCardInCnannelEntry 7 }
+
+a01InputCardInChannelState OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Signal state:
+            0 bit - StatusDisqualification,
+            1 bit - LossOfSignal,
+            2 bit - SSMDisqualification,
+            3 bit - LossOfFrame,
+            4 bit - LossOfMultiFrame,
+            5 bit - RecoveryDelay"
+    ::= { a01InputCardInCnannelEntry 8 }
+
+
+
+
+
+-- ########################################
+-- # Slot A02
+-- ########################################
+
+a02Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A02 Card type"
+    ::= { a02 100 }
+
+-- ########################################
+-- # Slot A02 Input Card
+-- ########################################
+
+a02InputCard OBJECT IDENTIFIER ::= { a02 1 }
+
+a02InputCardInChannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a02InputCardInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A02 Input Card input channel table"
+    ::= { a02InputCard 200 }
+
+a02InputCardInCnannelEntry OBJECT-TYPE
+    SYNTAX      A02InputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a02InputCardInChannelNumber }
+    ::= { a02InputCardInChannelTable 1 }
+
+A02InputCardInCnannel ::= SEQUENCE {
+        a02InputCardInChannelNumber					INTEGER,
+        a02InputCardInChannelType					INTEGER,
+        a02InputCardInChannelStatus					INTEGER,
+        a02InputCardInChannelStatusThreshold		INTEGER,
+        a02InputCardInChannelSsm					INTEGER,
+        a02InputCardInChannelSsmThreshold			INTEGER,
+        a02InputCardInChannelWaitToRestoreTime		INTEGER,
+        a02InputCardInChannelState					INTEGER,
+    }
+
+
+a02InputCardInChannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..4)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a02InputCardInCnannelEntry 1 }
+
+a02InputCardInChannelType OBJECT-TYPE
+    SYNTAX  INTEGER {
+                off(0),
+                10MHz(1),
+                2048kHz(2),
+                E1(3),
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a02InputCardInCnannelEntry 2 }
+
+
+a02InputCardInChannelStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                low(1),
+                high(2)
+            }
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a02InputCardInCnannelEntry 3 }
+
+a02InputCardInChannelStatusThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                low(1),
+                high(2)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a02InputCardInCnannelEntry 4 }
+
+a02InputCardInChannelSsm OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a02InputCardInCnannelEntry 5 }
+
+
+a02InputCardInChannelSsmThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a02InputCardInCnannelEntry 6 }
+
+a02InputCardInChannelWaitToRestoreTime OBJECT-TYPE
+    SYNTAX     INTEGER (1..1275)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "A02 Wait to restore time, sec"
+    ::= { a02InputCardInCnannelEntry 7 }
+
+a02InputCardInChannelState OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Signal state:
+            0 bit - StatusDisqualification,
+            1 bit - LossOfSignal,
+            2 bit - SSMDisqualification,
+            3 bit - LossOfFrame,
+            4 bit - LossOfMultiFrame,
+            5 bit - RecoveryDelay"
+    ::= { a02InputCardInCnannelEntry 8 }
+
+
+
+
+-- ########################################
+-- # Slot A03
+-- ########################################
+
+a03Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A03 Card type"
+    ::= { a03 100 }
+
+-- ########################################
+-- # Slot A03 Input Card
+-- ########################################
+
+a03InputCard OBJECT IDENTIFIER ::= { a03 1 }
+
+a03InputCardInChannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a03InputCardInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A03 Input Card input channel table"
+    ::= { a03InputCard 200 }
+
+a03InputCardInCnannelEntry OBJECT-TYPE
+    SYNTAX      A03InputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a03InputCardInChannelNumber }
+    ::= { a03InputCardInChannelTable 1 }
+
+A03InputCardInCnannel ::= SEQUENCE {
+        a03InputCardInChannelNumber					INTEGER,
+        a03InputCardInChannelType					INTEGER,
+        a03InputCardInChannelStatus					INTEGER,
+        a03InputCardInChannelStatusThreshold		INTEGER,
+        a03InputCardInChannelSsm					INTEGER,
+        a03InputCardInChannelSsmThreshold			INTEGER,
+        a03InputCardInChannelWaitToRestoreTime		INTEGER,
+        a03InputCardInChannelState					INTEGER,
+    }
+
+
+a03InputCardInChannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..4)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a03InputCardInCnannelEntry 1 }
+
+a03InputCardInChannelType OBJECT-TYPE
+    SYNTAX  INTEGER {
+                off(0),
+                10MHz(1),
+                2048kHz(2),
+                E1(3),
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a03InputCardInCnannelEntry 2 }
+
+
+a03InputCardInChannelStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                low(1),
+                high(2)
+            }
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a03InputCardInCnannelEntry 3 }
+
+a03InputCardInChannelStatusThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                low(1),
+                high(2)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a03InputCardInCnannelEntry 4 }
+
+a03InputCardInChannelSsm OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a03InputCardInCnannelEntry 5 }
+
+
+a03InputCardInChannelSsmThreshold OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a03InputCardInCnannelEntry 6 }
+
+a03InputCardInChannelWaitToRestoreTime OBJECT-TYPE
+    SYNTAX     INTEGER (1..1275)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "A03 Wait to restore time, sec"
+    ::= { a03InputCardInCnannelEntry 7 }
+
+a03InputCardInChannelState OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Signal state:
+            0 bit - StatusDisqualification,
+            1 bit - LossOfSignal,
+            2 bit - SSMDisqualification,
+            3 bit - LossOfFrame,
+            4 bit - LossOfMultiFrame,
+            5 bit - RecoveryDelay"
+    ::= { a03InputCardInCnannelEntry 8 }
+
+
+
+
+
+
+
+
+-- ########################################
+-- # Slot A06
+-- ########################################
+
+a06Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A06 Card type"
+    ::= { a06 100 }
+
+-- ########################################
+-- # Slot A06 Generator
+-- ########################################
+
+a06Generator OBJECT IDENTIFIER ::= { a06 4 }
+
+a06GeneratorState OBJECT-TYPE
+    SYNTAX  INTEGER {
+				warmup(0),
+				freerun(1),
+				tracking(2),
+				holdover(3),
+				adjustment(6),
+                error(255)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A06 Generator State"
+    ::= { a06Generator 1 }
+
+a06GeneratorModeSettings OBJECT IDENTIFIER ::= { a06Generator 2 }
+
+a06GeneratorModeInit OBJECT-TYPE
+    SYNTAX	INTEGER {
+			unknown(0),
+			init(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { a06GeneratorModeSettings 100 }	    
+
+a06GeneratorModeSave OBJECT-TYPE
+    SYNTAX      INTEGER {
+			unknown(0),
+			save(1)
+			}
+    MAX-ACCESS  read-write
+    STATUS     current
+    DESCRIPTION
+        "Save config"
+    ::= { a06GeneratorModeSettings 101 }	
+
+a06GeneratorMode OBJECT-TYPE
+    SYNTAX  INTEGER {
+				auto(0),
+				manual(1),
+                holdover(2)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+        "A06 Generator Mode"
+    ::= { a06GeneratorModeSettings 1 }
+
+a06GeneratorManualChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..18)
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+        "A06 Generator Input. Only available in manual mode"
+    ::= { a06GeneratorModeSettings 2 }
+
+
+a06GeneratorActiveChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..18)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a06Generator 4 }
+
+a06GeneratorInCnannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a06GeneratorInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A06 Generator input channel table"
+    ::= { a06Generator 200 }
+
+a06GeneratorInCnannelEntry OBJECT-TYPE
+    SYNTAX      A06GeneratorInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a06GeneratorInCnannelNumber }
+    ::= { a06GeneratorInCnannelTable 1 }
+
+A06GeneratorInCnannel ::= SEQUENCE {
+        a06GeneratorInCnannelNumber				INTEGER,
+		a06GeneratorInCnannelPriority			INTEGER,
+		a06GeneratorInCnannelCurrentPriority 	INTEGER,
+		a06GeneratorInCnannelBan				INTEGER
+	}
+
+
+a06GeneratorInCnannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..18)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a06GeneratorInCnannelEntry 1 }
+	
+a06GeneratorInCnannelBan OBJECT-TYPE
+    SYNTAX  INTEGER {
+				ban(0),
+				ok(1)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a06GeneratorInCnannelEntry 2 }
+	
+a06GeneratorInCnannelPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a06GeneratorInCnannelEntry 3 }
+
+a06GeneratorInCnannelCurrentPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a06GeneratorInCnannelEntry 4 }
+
+
+
+
+
+
+
+-- ########################################
+-- # Slot A08
+-- ########################################
+
+a08Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A08 Card type"
+    ::= { a08 100 }
+
+-- ########################################
+-- # Slot A08 Generator
+-- ########################################
+
+a08Generator OBJECT IDENTIFIER ::= { a08 4 }
+
+a08GeneratorState OBJECT-TYPE
+    SYNTAX  INTEGER {
+				warmup(0),
+				freerun(1),
+				tracking(2),
+				holdover(3),
+				adjustment(6),
+                error(255)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A08 Generator State"
+    ::= { a08Generator 1 }
+
+a08GeneratorModeSettings OBJECT IDENTIFIER ::= { a08Generator 2 }
+
+a08GeneratorModeInit OBJECT-TYPE
+    SYNTAX	INTEGER {
+			unknown(0),
+			init(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { a08GeneratorModeSettings 100 }	    
+
+a08GeneratorModeSave OBJECT-TYPE
+    SYNTAX      INTEGER {
+			unknown(0),
+			save(1)
+			}
+    MAX-ACCESS  read-write
+    STATUS     current
+    DESCRIPTION
+        "Save config"
+    ::= { a08GeneratorModeSettings 101 }	
+
+a08GeneratorMode OBJECT-TYPE
+    SYNTAX  INTEGER {
+				auto(0),
+				manual(1),
+                holdover(2)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+        "A08 Generator Mode"
+    ::= { a08GeneratorModeSettings 1 }
+
+a08GeneratorManualChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..18)
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+        "A08 Generator Input. Only available in manual mode"
+    ::= { a08GeneratorModeSettings 2 }
+
+a08GeneratorActiveChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..18)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a08Generator 4 }
+
+-- # Slot A08 Generator Input Channel Table
+
+a08GeneratorInCnannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a08GeneratorInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A08 Generator input channel table"
+    ::= { a08Generator 200 }
+
+a08GeneratorInCnannelEntry OBJECT-TYPE
+    SYNTAX      A08GeneratorInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a08GeneratorInCnannelNumber }
+    ::= { a08GeneratorInCnannelTable 1 }
+
+A08GeneratorInCnannel ::= SEQUENCE {
+        a08GeneratorInCnannelNumber				INTEGER,
+		a08GeneratorInCnannelPriority			INTEGER,
+		a08GeneratorInCnannelCurrentPriority 	INTEGER,
+		a08GeneratorInCnannelBan				INTEGER
+	}
+
+
+a08GeneratorInCnannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..18)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a08GeneratorInCnannelEntry 1 }
+
+a08GeneratorInCnannelBan OBJECT-TYPE
+    SYNTAX  INTEGER {
+				ban(0),
+				ok(1)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a08GeneratorInCnannelEntry 2 }
+	
+a08GeneratorInCnannelPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a08GeneratorInCnannelEntry 3 }
+
+a08GeneratorInCnannelCurrentPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a08GeneratorInCnannelEntry 4 }
+
+
+
+
+
+
+
+
+
+-- ########################################
+-- # Slot A10
+-- ########################################
+
+a10Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A10 Card type"
+    ::= { a10 100 }
+
+-- ########################################
+-- # Slot A10 Output
+-- ########################################
+
+a10OutputCard OBJECT IDENTIFIER ::= { a10 3 }
+
+a10OutputCardActiveChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a10OutputCard 1 }
+	
+a10OutputCardBackupChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a10OutputCard 2 }
+	
+a10OutputCardSynchronization500Hz OBJECT-TYPE
+    SYNTAX  INTEGER {
+				failure(0),
+				ok(1)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a10OutputCard 3 }
+
+a10OutputCardActive OBJECT-TYPE
+    SYNTAX  INTEGER {
+				passive(0),
+				active(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a10OutputCard 4 }
+
+
+
+-- # Slot A10 Output Card input channel table
+
+a10OutputCardInCnannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a08GeneratorInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A10 Output card input channel table"
+    ::= { a10OutputCard 200 }
+
+a10OutputCardInCnannelEntry OBJECT-TYPE
+    SYNTAX      A10OutputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a10OutputCardInCnannelNumber }
+    ::= { a10OutputCardInCnannelTable 1 }
+
+A10OutputCardInCnannel ::= SEQUENCE {
+        a10OutputCardInCnannelNumber			INTEGER,
+		a10OutputCardInCnannelPriority			INTEGER,
+		a10OutputCardInCnannelCurrentPriority 	INTEGER,
+		a10OutputCardInCnannelBan				INTEGER
+	}
+
+a10OutputCardInCnannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a10OutputCardInCnannelEntry 1 }
+
+a10OutputCardInCnannelBan OBJECT-TYPE
+    SYNTAX  INTEGER {
+				ban(0),
+				ok(1)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a10OutputCardInCnannelEntry 2 }
+	
+a10OutputCardInCnannelPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+			"Available only for the first 16 signals"
+    ::= { a10OutputCardInCnannelEntry 3 }
+
+a10OutputCardInCnannelCurrentPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+			"Available only for the first 16 signals"
+    ::= { a10OutputCardInCnannelEntry 4 }
+
+-- # Slot A10 Output Card output channel table
+
+a10OutputCardOutCnannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a08GeneratorInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A10 Output card output channel table"
+    ::= { a10OutputCard 201 }
+
+a10OutputCardOutCnannelEntry OBJECT-TYPE
+    SYNTAX      A10OutputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a10OutputCardOutCnannelNumber }
+    ::= { a10OutputCardOutCnannelTable 1 }
+
+
+A10OutputCardOutCnannel ::= SEQUENCE {
+        a10OutputCardOutCnannelNumber			INTEGER,
+		a10OutputCardOutCnannelType				INTEGER,
+		a10OutputCardOutCnannelSsm 				INTEGER,
+		a10OutputCardOutCnannelSsmControlMode	INTEGER
+	}
+	
+a10OutputCardOutCnannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a10OutputCardOutCnannelEntry 1 }
+
+a10OutputCardOutCnannelType OBJECT-TYPE
+    SYNTAX  INTEGER {
+				off(0),
+				2048kHz(2),
+				E1(3),
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a10OutputCardOutCnannelEntry 2 }	
+	
+a10OutputCardOutCnannelSsm OBJECT-TYPE
+    SYNTAX  INTEGER {
+				none(0),
+				prc(2),
+				ssuT(4),
+				ssuL(8),
+				sec(11),
+				dnu(15)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a10OutputCardOutCnannelEntry 3 }
+
+a10OutputCardOutCnannelSsmControlMode OBJECT-TYPE
+    SYNTAX  INTEGER {
+				auto(0),
+				manual(1),
+				off(2)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a10OutputCardOutCnannelEntry 4 }
+	
+
+-- ########################################
+-- # Slot A11
+-- ########################################
+
+a11Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A11 Card type"
+    ::= { a11 100 }
+
+-- ########################################
+-- # Slot A11 Output
+-- ########################################
+
+a11OutputCard OBJECT IDENTIFIER ::= { a11 3 }
+
+a11OutputCardActiveChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a11OutputCard 1 }
+	
+a11OutputCardBackupChannelNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a11OutputCard 2 }
+	
+a11OutputCardSynchronization500Hz OBJECT-TYPE
+    SYNTAX  INTEGER {
+				failure(0),
+				ok(1)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a11OutputCard 3 }
+
+a11OutputCardActive OBJECT-TYPE
+    SYNTAX  INTEGER {
+				passive(0),
+				active(1)
+			}
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a11OutputCard 4 }
+	
+-- # Slot A11 Output Card input channel table
+
+a11OutputCardInCnannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a08GeneratorInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A08 Generator input channel table"
+    ::= { a11OutputCard 200 }
+
+a11OutputCardInCnannelEntry OBJECT-TYPE
+    SYNTAX      A11OutputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a11OutputCardInCnannelNumber }
+    ::= { a11OutputCardInCnannelTable 1 }
+
+A11OutputCardInCnannel ::= SEQUENCE {
+        a11OutputCardInCnannelNumber			INTEGER,
+		a11OutputCardInCnannelPriority          INTEGER,
+		a11OutputCardInCnannelCurrentPriority 	INTEGER,
+		a11OutputCardInCnannelBan		INTEGER
+	}
+
+a11OutputCardInCnannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a11OutputCardInCnannelEntry 1 }
+
+a11OutputCardInCnannelBan OBJECT-TYPE
+    SYNTAX  INTEGER {
+				ban(0),
+				ok(1)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a11OutputCardInCnannelEntry 2 }
+	
+a11OutputCardInCnannelPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-write
+    STATUS     current
+	DESCRIPTION
+			"Available only for the first 16 signals"
+    ::= { a11OutputCardInCnannelEntry 3 }
+
+a11OutputCardInCnannelCurrentPriority OBJECT-TYPE
+    SYNTAX     INTEGER (0..8)
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+			"Available only for the first 16 signals"
+    ::= { a11OutputCardInCnannelEntry 4 }
+
+
+-- # Slot A11 Output Card output channel table
+
+a11OutputCardOutCnannelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF a08GeneratorInCnannelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A11 Output card output channel table"
+    ::= { a11OutputCard 201 }
+
+a11OutputCardOutCnannelEntry OBJECT-TYPE
+    SYNTAX      A11OutputCardInCnannel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    INDEX   { a11OutputCardOutCnannelNumber }
+    ::= { a11OutputCardOutCnannelTable 1 }
+
+
+A11OutputCardOutCnannel ::= SEQUENCE {
+        a11OutputCardOutCnannelNumber			INTEGER,
+        a11OutputCardOutCnannelType				INTEGER,
+        a11OutputCardOutCnannelSsm 				INTEGER,
+        a11OutputCardOutCnannelSsmControlMode	INTEGER
+    }
+
+a11OutputCardOutCnannelNumber OBJECT-TYPE
+    SYNTAX     INTEGER (1..20)
+    MAX-ACCESS read-only
+    STATUS     current
+    ::= { a11OutputCardOutCnannelEntry 1 }
+
+a11OutputCardOutCnannelType OBJECT-TYPE
+    SYNTAX  INTEGER {
+                off(0),
+                2048kHz(2),
+                E1(3),
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a11OutputCardOutCnannelEntry 2 }
+
+a11OutputCardOutCnannelSsm OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(0),
+                prc(2),
+                ssuT(4),
+                ssuL(8),
+                sec(11),
+                dnu(15)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a11OutputCardOutCnannelEntry 3 }
+
+a11OutputCardOutCnannelSsmControlMode OBJECT-TYPE
+    SYNTAX  INTEGER {
+                auto(0),
+                manual(1),
+                off(2)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    ::= { a11OutputCardOutCnannelEntry 4 }
+
+
+
+
+
+-- ########################################
+-- # Slot A12
+-- ########################################
+
+a12Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A12 Card type"
+    ::= { a12 100 }
+
+
+-- ########################################
+-- # Slot A13
+-- ########################################
+
+a13Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A13 Card type"
+    ::= { a13 100 }
+
+
+-- ########################################
+-- # Slot A14
+-- ########################################
+
+a14Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A14 Card type"
+    ::= { a14 100 }
+
+
+
+-- ########################################
+-- # Slot A15
+-- ########################################
+
+a15Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A15 Card type"
+    ::= { a15 100 }
+	
+	
+
+-- ########################################
+-- # Slot A16
+-- ########################################
+
+a16Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A16 Card type"
+    ::= { a16 100 }	
+	
+
+
+-- ########################################
+-- # Slot A17
+-- ########################################
+
+a17Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A17 Card type"
+    ::= { a17 100 }
+
+
+
+-- ########################################
+-- # Slot A18 Monitoring Card
+-- ########################################
+
+a18Type OBJECT-TYPE
+    SYNTAX  INTEGER {
+				empty(0),
+			    input(1),
+				output(3),
+				generator(4),
+				monitoring(5),
+				gnss(7),
+				outputMultiplier(8)
+			}
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+        "A18 Card type"
+    ::= { a18 100 }
+
+
+
+
+
+
+END
+
+
+
+
